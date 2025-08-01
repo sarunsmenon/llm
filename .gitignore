@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.env
+.env
+*.egg-info/
+dist/
+build/
+*.log
+*.pickle
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# SQLite3 database files
+*.sqlite3
+*.sqlite
+*.db
+
+# VSCode settings
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Chromadb files
+chromadb/
+*.bin
+
+# LLM files
+**/*.deepeval
+/data/*.csv
+/data/*.json
