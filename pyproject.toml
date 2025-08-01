@@ -1,0 +1,18 @@
+[project]
+name = "llm"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "aiobotocore>=2.23.2",
+    "chromadb>=1.0.15",
+    "deepeval>=3.3.3",
+    "faiss-cpu>=1.11.0.post1",
+    "langchain>=0.3.27",
+    "langchain-community>=0.3.27",
+    "langchain-openai>=0.3.28",
+    "langgraph>=0.6.2",
+    "openai>=1.98.0",
+    "python-dotenv>=1.1.1",
+]
