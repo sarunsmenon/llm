@@ -2,7 +2,7 @@
 """
 Moltbook Daily Workflow - Main Entry Point
 
-This is the main script that orchestrates all 6 workflow tasks.
+This is the main script that orchestrates all 7 workflow tasks.
 
 Usage:
     python moltbook/main.py
@@ -91,50 +91,48 @@ def run_workflow(
         # Task 1: Check for new comments
         new_comments = workflow.task1_check_new_comments()
         
+        # Initialize results for tracking
+        results = {'success': 0, 'failed': 0}
+        comments_with_responses = []
+        
         if not new_comments:
-            logger.info("No new comments found. Workflow complete.")
+            logger.info("No new comments found. Skipping comment response tasks.")
+        else:
+            # Archive received comments
             if archiver:
-                summary = archiver.get_daily_summary()
-                logger.info(f"Daily summary: {summary}")
-            return True
-        
-        # Archive received comments
-        if archiver:
-            for comment in new_comments:
-                archiver.archive_interaction(
-                    interaction_type="comment_received",
-                    comment_data=comment
+                for comment in new_comments:
+                    archiver.archive_interaction(
+                        interaction_type="comment_received",
+                        comment_data=comment
+                    )
+            
+            # Task 2: Build context
+            enriched_comments = workflow.task2_build_context(new_comments)
+            
+            if enriched_comments:
+                # Task 3: Generate responses
+                comments_with_responses = workflow.task3_generate_responses(
+                    enriched_comments,
+                    provider=llm_provider
                 )
-        
-        # Task 2: Build context
-        enriched_comments = workflow.task2_build_context(new_comments)
-        
-        if not enriched_comments:
-            logger.warning("Failed to build context for comments")
-            return False
-        
-        # Task 3: Generate responses
-        comments_with_responses = workflow.task3_generate_responses(
-            enriched_comments,
-            provider=llm_provider
-        )
-        
-        if not comments_with_responses:
-            logger.warning("Failed to generate any responses")
-            return False
-        
-        # Task 4: Send replies
-        results = workflow.task4_send_replies(comments_with_responses, dry_run=dry_run)
-        
-        # Archive sent replies
-        if archiver and not dry_run:
-            for comment in comments_with_responses:
-                archiver.archive_interaction(
-                    interaction_type="reply_sent",
-                    comment_data=comment,
-                    reply_data=comment,
-                    success=True
-                )
+                
+                if comments_with_responses:
+                    # Task 4: Send replies
+                    results = workflow.task4_send_replies(comments_with_responses, dry_run=dry_run)
+                    
+                    # Archive sent replies
+                    if archiver and not dry_run:
+                        for comment in comments_with_responses:
+                            archiver.archive_interaction(
+                                interaction_type="reply_sent",
+                                comment_data=comment,
+                                reply_data=comment,
+                                success=True
+                            )
+                else:
+                    logger.warning("Failed to generate any responses")
+            else:
+                logger.warning("Failed to build context for comments")
         
         # Task 6: Generate daily summary
         if archiver:
@@ -150,6 +148,9 @@ def run_workflow(
             logger.info(f"Unique commenters: {summary['unique_commenters']}")
             logger.info(f"Submolts: {', '.join(summary['submolts'])}")
         
+        # Task 7: Post Gandalf quote to /m/lotr
+        gandalf_success = workflow.task7_post_gandalf_quote(dry_run=dry_run)
+        
         # Final summary
         end_time = datetime.now(timezone.utc)
         duration = (end_time - start_time).total_seconds()
@@ -162,6 +163,7 @@ def run_workflow(
         logger.info(f"Responses generated: {len(comments_with_responses)}")
         logger.info(f"Replies sent: {results['success']}")
         logger.info(f"Failed: {results['failed']}")
+        logger.info(f"Gandalf quote posted: {'Yes' if gandalf_success else 'No'}")
         logger.info("=" * 80)
         
         return True
@@ -195,6 +197,7 @@ Examples:
 
 Environment Variables Required:
   MOLTBOOK_API_KEY     - Your Moltbook API key
+  OPENROUTER_API_KEY   - OpenRouter API key (for Gandalf quotes)
   OPENAI_API_KEY       - OpenAI API key (if using OpenAI)
   ANTHROPIC_API_KEY    - Anthropic API key (if using Anthropic)
         """

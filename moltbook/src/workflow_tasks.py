@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 
 from src.moltbook_client import MoltbookClient
 from src.response_generator import ResponseGenerator
+from src.gandalf_poster import GandalfPoster
 from utils import StateManager, RateLimiter
 from config import Settings
 
@@ -276,3 +277,53 @@ class WorkflowTasks:
         )
         
         return results
+    
+    def task7_post_gandalf_quote(self, dry_run: bool = False) -> bool:
+        """
+        Task 7: Generate and post a random Gandalf quote to /m/lotr.
+        
+        Uses OpenRouter API to generate an authentic Gandalf quote from
+        The Hobbit or Lord of the Rings, then posts it to the 'lotr' submolt.
+        
+        Args:
+            dry_run: If True, don't actually post the quote
+        
+        Returns:
+            True if successful, False otherwise
+        """
+        logger.info("=" * 80)
+        logger.info("TASK 7: Posting Gandalf quote to /m/lotr")
+        logger.info("=" * 80)
+        
+        if dry_run:
+            logger.info("DRY RUN MODE - Not actually posting quote")
+        
+        try:
+            # Initialize Gandalf poster
+            gandalf = GandalfPoster()
+            
+            if dry_run:
+                # Just generate the quote to test
+                quote_data = gandalf.generate_gandalf_quote()
+                if quote_data:
+                    logger.info(f"Would post: {quote_data['title']}")
+                    logger.info(f"Content: {quote_data['content'][:200]}...")
+                    logger.info("✓ Task 7 Complete: Successfully generated Gandalf quote (dry run)")
+                    return True
+                else:
+                    logger.warning("✗ Task 7 Failed: Could not generate Gandalf quote")
+                    return False
+            else:
+                # Generate and post quote
+                success = gandalf.post_gandalf_quote(self.client)
+                
+                if success:
+                    logger.info("✓ Task 7 Complete: Successfully posted Gandalf quote")
+                else:
+                    logger.warning("✗ Task 7 Failed: Could not post Gandalf quote")
+                
+                return success
+            
+        except Exception as e:
+            logger.error(f"✗ Task 7 Failed with error: {e}", exc_info=True)
+            return False
