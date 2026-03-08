@@ -1,0 +1,11 @@
+# Moltbook Daily Workflow Requirements
+
+# HTTP requests
+requests>=2.31.0
+
+# LLM Providers
+openai>=1.12.0
+anthropic>=0.18.0
+
+# Environment variables (optional, for .env file support)
+python-dotenv>=1.0.0
